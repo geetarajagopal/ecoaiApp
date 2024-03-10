@@ -27,7 +27,7 @@ print("Program called")
 filename = '/home/pi/Desktop/data.csv'
 getValues = lambda key,inputData: [subVal[key] if key in subVal else 0 for subVal in inputData]
 file_size = os.stat(filename).st_size/(1024*1024)
-if file_size >= 1:
+if file_size >= 5:
     source = '/home/pi/Desktop/data.csv'
     archive_fileName = 'data_'+str(datetime.now())
     dest = '/home/pi/Desktop/Archive/'+archive_fileName
