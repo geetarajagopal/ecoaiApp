@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "ecoaiapp",
+  "private_key_id": "12d9305c3d7dd331489fb7efdabeb771aaff3bec",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDDiroCq5DrbbAT\nc2/rhvB32dVJf/e/yR+b9MwLLTtH8BMBkAgbHASScm5By02sgcFFefwHbA37968N\nGH8e9Yze/6Q0NU7nZ7/xzjlpcl+9xEm3N72XNUqcvisFSu1Bkvg4TBvngTgBOmEb\nE81PtJ/C8CPEQ9ywwyM+e3cJ0SKghbxc/eyyA9ULb5S6ZcewLkQ6NHoq0HvHfYkl\nN/dVg7gBlPC9xYcandXSemXr8PSHeIZAd6Lg1CUzAHxOpBp2xOWGVW2gZleRBsqb\nK3vmdh2QQkOKizN+Ai0fGExmIs8euhNTPxwGjB7/BUuQwWMCNW2JDXI+jEQ0WKIn\nzz+zxXiBAgMBAAECggEAAf2dHwq2eAoa5DjNMXJzS2IPpX7Ys6ZxVJ/vbZfzWfwy\nAlagOX/tlTzWXeO7JcPgpwOa1uvBAPEcomtO3H6jFXBYcGpgRDNygRyAib/3BO5d\nEoEeFE5v5PR76ULx80Ri8+ZE9LR0YLFSpKEdCoggBf7WO2DWO+Oxrbi5rZM4KTaM\nxBfNZUlLROeZ6pGbRPxnJ/hWu/ChTpOXdunf7OM8HB7YT6LT4zsK2/tjb34w1qtM\nlWdCMpVBiX1fs+gEtzXROxEpu9s8ZiDoZ9HUGAQahNTydJbjh2wR9ft9BmV0vLH7\ndOjJq0w6PiYUV+NVQMlntVzJA8H+TaQUg7c1p+KTUQKBgQDtNf6+ILCw/3CoJA4b\nF8qOwjlGDus9bYIOJHaJ8E2fMOHmR8ccjvEQj2cwzwoI4ZpC2dsysISaj9qEzHKe\nJsPL/pRtOiLA2SNMsRHsc/O8VPXNkBBbUkZo0Osk8F1NUmyZ7z6/2EH8aMr2EugX\neYQfTmfUoBXtFsC62Bm59QtIcQKBgQDTB8uBs2CY1NERmNoM6qCEz7sMGODCn/Nb\n69Vq5YWGGvyX+0zl1btdV4IIVmJ29fwYTPzaJpeVSV9maQxKtBbluifEB/s2E+5R\nfF4hyuymwQ4kqv5ofZ2MHwAvuthH+Bqr6azTxDxzQmK4sMoPjw8S/RbnAldVQ/XN\ncSYdp2y5EQKBgQCn9nSzoagbHDRkCmumiXkXDrXJQqUVMOZHJ1B8KZh84PsDuM1n\nDlvpUvFJYUCEu2Ikdeg9AzpRywx6vd1m2KIJXvEwSlrzXI0fL742RIBQWYRXEuxS\nDXbnnw7xb/VQ280kToCLDRDkLjuQdCC9BoEkPbtNljEQWO0NIBlPUBC2MQKBgQDK\nIIk37cv0FsM5i6IvBPxCuYV7DMkbIYFC5hxAix7dWDPgjn8VFSalPQ/7VGJzdyDD\nVdpKSPSftOt/d9aiJuRXnXpBNTPUlDqMKgcvbuJExlz5mh6bjtW8RGU1Uk2egXFq\ngCNdonQUId3U8OBZDrltgqTRF1j2/mUNJfdQJ/DnQQKBgGz3//lnQAdEHmE9wCFM\nqfHBrf1Ol7w3P5DQdPdGUAwmRFfoCK7j7XAWqWGI5s22fsrxuuy/YDFAJ4iv9vRI\nyUQ0pjfG9bL8zj4crgXqyTLsQuVc6JBgBlxLUM1phivNvg/W2DhFcSCiPv39zbDX\n71gQutdaQuyWwX9OySkcQS9d\n-----END PRIVATE KEY-----\n",
+  "client_email": "ecoaiagent@ecoaiapp.iam.gserviceaccount.com",
+  "client_id": "110514498472308622139",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/ecoaiagent%40ecoaiapp.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
