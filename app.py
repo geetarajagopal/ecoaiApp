@@ -75,7 +75,7 @@ def serve_layout():
         data_combined = data
     data_combined  = data_combined[data_combined['Location']!='indoor']      
     dates_to_exclude = ["2024-03-07 10:20","2024-03-07 10:25"]
-
+    
 
     print(data.shape)
     data_combined = data_combined.dropna(subset=['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity'])
@@ -92,9 +92,11 @@ def serve_layout():
     #data = data.drop(data[data['Humidity'] <= 75].index)
     data_combined["Date"] = pd.to_datetime(data_combined["Date"], format = '%Y-%m-%d %H:%M')
     #data_combined["Date"] = data_combined["Date"].dt.strftime('%Y-%m-%d %H:%M')
-
-    data_combined = data_combined.drop(data_combined[data_combined.index.strftime("%Y-%m-%d %H:%M") == "2024-03-07 10:20"].index)
-    data_combined = data_combined.drop(data_combined[data_combined.index.strftime("%Y-%m-%d %H:%M") == "2024-03-07 10:25"].index)
+    f = open("dates_to_exclude.txt","r")
+    for x in f:
+        data_combined = data_combined.drop(data_combined[data_combined.index.strftime("%Y-%m-%d %H:%M") == x.replace("\n","")].index)
+    #data_combined = data_combined.drop(data_combined[data_combined.index.strftime("%Y-%m-%d %H:%M") == "2024-03-07 10:20"].index)
+    #data_combined = data_combined.drop(data_combined[data_combined.index.strftime("%Y-%m-%d %H:%M") == "2024-03-07 10:25"].index)
     #data_combined = data_combined[data_combined.index.date != datetime.datetime(2024,3,7,10,20)]
     #2024-02-12 18:40:09
     #data = data.drop()
@@ -530,7 +532,7 @@ def serve_layout():
     html.H1(children='Eco-AI Data', style={'textAlign':'center'}),
     html.H3("Predicted Humidity for next 24 hours by Linear Regression:"+str(round(lin_reg_pred,2))),
     html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
-    dash_table.DataTable(data=data_combined[['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow','Forecasted_Temp_24Hours','Forecasted_Humidity_24Hours','Forecasted_Rain_24Hours','Forecasted_Snow_24Hours']].to_dict('records'),page_size=10),
+    dash_table.DataTable(data=data_combined[['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow','Forecasted_Temp_24Hours','Forecasted_Humidity_24Hours','Forecasted_Rain_24Hours','Forecasted_Snow_24Hours']].sort_index(ascending=False).to_dict('records'),page_size=10),
     dcc.Graph(figure=fig3),
     dcc.Graph(figure=fig2),
     dcc.Graph(figure=fig1),
@@ -538,7 +540,12 @@ def serve_layout():
     dcc.Graph(figure=fig5),
     dcc.Graph(figure=fig6),
     dcc.Graph(figure=fig7),
-    dcc.Graph(figure=fig8)
+    dcc.Graph(figure=fig8),
+    dcc.Interval(
+            id='interval-component',
+            interval=5*1000, # in milliseconds
+            n_intervals=0
+        )
     #dcc.Dropdown(df_withforecast.columns, 'Humidity', id='dropdown-selection'),
     #dcc.Textarea(id='id-textarea',value='value'),
     #dcc.Graph(figure=px.line(df_withforecast.index,df_withforecast['Humidity'].values))
