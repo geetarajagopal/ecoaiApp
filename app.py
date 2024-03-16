@@ -77,6 +77,7 @@ def serve_layout():
     dates_to_exclude = ["2024-03-07 10:20","2024-03-07 10:25"]
     
 
+
     print(data.shape)
     data_combined = data_combined.dropna(subset=['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity'])
 
@@ -164,13 +165,17 @@ def serve_layout():
     #data_combined["Current_Snow"] = np.where(data_combined["Forecast_Snow"][0] != 0, 1, 0)
     data_combined.loc[:, 'Current_Rain'] = data_combined.Forecast_Rain.map(lambda x: x[0])
     data_combined.loc[:, 'Current_Snow'] = data_combined.Forecast_Snow.map(lambda x: x[0])
-    data_combined.loc[:, 'Forecasted_Temp_24Hours'] = data_combined.Forecast_Temp.map(lambda x: x[time_period_prediction])
+    data_combined.loc[:, 'Forecasted_Temp_24Hours'] = data_combined.Forecast_Temp.map(lambda x: round(x[time_period_prediction],2))
     data_combined.loc[:, 'Forecasted_Humidity_24Hours'] = data_combined.Forecast_Humidity.map(lambda x: x[time_period_prediction])
     data_combined.loc[:, 'Forecasted_Rain_24Hours'] = data_combined.Forecast_Rain.map(lambda x: x[time_period_prediction])
     data_combined.loc[:, 'Forecasted_Snow_24Hours'] = data_combined.Forecast_Snow.map(lambda x: x[time_period_prediction])
     data_ML_factors = data_combined[['Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow']]
     data_ML_Y = data_combined[['Humidity']]
-
+    data_combined['Humidity'] = data_combined['Humidity'].apply(lambda x: round(x, 2))
+    data_combined['Temperature'] = data_combined['Temperature'].apply(lambda x: round(x, 2))
+    data_combined['Current_Temp'] = data_combined['Current_Temp'].apply(lambda x: round(x, 2))
+    
+    
     #Linear Regression and SVM model training:
     from sklearn.linear_model import LinearRegression
     from sklearn.model_selection import train_test_split
@@ -227,7 +232,7 @@ def serve_layout():
     complete_data = complete_data.set_index('Date')
     complete_data.Humidity = complete_data.Humidity.astype(float)
 
-    complete_data['Humidity'] = complete_data['Humidity'].astype(float)
+    complete_data['Humidity'] = round(complete_data['Humidity'].astype(float),2)
     complete_data.dtypes
 
     #SMA
@@ -307,7 +312,7 @@ def serve_layout():
 
     #Reg and SVC prediction:
     
-   
+   #prediction_temp.iloc[12],
     data_factors = [[prediction_temp.iloc[12],float(plot_data['Forecast_Humidity'][-1][time_period_prediction]),plot_data['Forecast_Temp'][-1][time_period_prediction],plot_data['Forecast_Rain'][-1][time_period_prediction],plot_data['Forecast_Snow'][-1][time_period_prediction]]] 
     data_ML_test = pd.DataFrame(data_factors)
     print("Prediction for time:",label)
@@ -482,7 +487,7 @@ def serve_layout():
     df_withforecast.head(5)"""
     complete_data = complete_data.reset_index(drop=False)
     complete_data['Date'] = pd.to_datetime(complete_data["Date"].astype(str),format="mixed")
-
+    complete_data = complete_data.round(2)
 
     fig1 = px.line(data_frame=df_withforecast_arima[['Date','Humidity']],x="Date",y="Humidity",title="Humidity Forecast(ARIMA)")
     fig1.add_vline(
