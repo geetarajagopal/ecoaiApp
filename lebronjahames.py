@@ -52,7 +52,7 @@ with open(filename, 'a', newline='') as csvfile:
                 #print(response['current']['temp'],response['current']['humidity'])
                 #print(getValues('snow',response['hourly']))
                 #print(response['hourly'][0]['rain']['1h'])
-                if abs(temperature - (response['current']['temp']-273.15)) >=5:
+                if abs(temperature - (response['current']['temp']-273.15)) >=10:
                     location_value = "indoor"
                 else:
                     location_value = "outdoor"
