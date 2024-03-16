@@ -535,6 +535,7 @@ def serve_layout():
     #     n_intervals=0
     # ),
     html.H1(children='Eco-AI Data', style={'textAlign':'center'}),
+    html.Meta(httpEquiv='refresh',content="300"),
     html.H3("Predicted Humidity for next 24 hours by Linear Regression:"+str(round(lin_reg_pred,2))),
     html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
     dash_table.DataTable(data=data_combined[['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow','Forecasted_Temp_24Hours','Forecasted_Humidity_24Hours','Forecasted_Rain_24Hours','Forecasted_Snow_24Hours']].sort_index(ascending=False).to_dict('records'),page_size=10),
