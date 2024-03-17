@@ -56,7 +56,7 @@ with open(filename, 'a', newline='') as csvfile:
     #        if(multiple(time.localtime().tm_min,1)):
     #    current_time = datetime.now()
 
-        min_vol = 0.92
+        min_vol = 0
         max_vol = 2.45
         humidity_old, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
         volt_val = round(chan.voltage,2)
