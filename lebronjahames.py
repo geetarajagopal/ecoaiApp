@@ -73,7 +73,7 @@ with open(filename, 'a', newline='') as csvfile:
                     location_value = "indoor"
                 else:
                     location_value = "outdoor"
-                csv_writer.writerow([datetime.now(),round(humidity,2),volt_val,round(temperature,2),response['current']['temp'],response['current']['humidity'],getValues('temp',response['hourly']),getValues('humidity',response['hourly']),location_value,getValues('rain',response['hourly']),getValues('snow',response['hourly'])])
+                csv_writer.writerow([datetime.now(),round(humidity,2),volt_val,round(humidity_old,2),round(temperature,2),response['current']['temp'],response['current']['humidity'],getValues('temp',response['hourly']),getValues('humidity',response['hourly']),location_value,getValues('rain',response['hourly']),getValues('snow',response['hourly'])])
                 print("appended")
                 break
             except Exception as e:
