@@ -60,7 +60,7 @@ with open(filename, 'a', newline='') as csvfile:
         max_vol = 2.45
         humidity_old, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
         volt_val = round(chan.voltage,2)
-        humidity = ((1-(volt_val-min_vol))/(max_vol-min_vol))*100
+        humidity = ((1-(volt_val-min_vol)/(max_vol-min_vol)))*100
         if humidity is not None and temperature is not None:
             print("Temp={0:0.1f}C Humidity={1:0.1f}%".format(temperature, humidity))
             try:
