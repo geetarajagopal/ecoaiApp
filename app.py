@@ -46,31 +46,38 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from sklearn.metrics import mean_squared_error
-
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.vector_ar.var_model import VAR
 from math import sqrt
 
 from statistics import mean
 import datetime
 import ast
-badlines_list = []
+
 def badlines_collect(bad_line):
      badlines_list.append(bad_line)
      return None
 #(bad_line: list[str]) -> list[str] | None
 def serve_layout():
+    global badlines_list
+    badlines_list = []
     TestGoogleDrive.getFileListFromGDrive()
     time_period_prediction = 24 #time period for which prediction is to be done
     data = pd.read_csv(csv_path, engine="python", on_bad_lines=badlines_collect)
     data.columns=['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity',"Location",'rain','snow']
-
+    volt = [0] * len(data)
+    humidity_old = [0] * len(data)
+    data["Voltage"]  = volt
+    data["Humidity_old"] = humidity_old
     if len(badlines_list) > 0:
         df_bad_rows = pd.DataFrame(badlines_list)
-        df_bad_rows.columns = ['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity',"Location",'rain','snow']
-        snow =[[0]*144]*649
-        rain = [[0]*144]*649
-        data.loc[:,"rain"] = rain
-        data.loc[:,"snow"] = snow
+        df_bad_rows.columns = ['Date','Humidity',"Voltage","Humidity_old",'Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity',"Location",'rain','snow']
+        #snow =[[0]*144]*649
+        #rain = [[0]*144]*649
+        #df_bad_rows.loc[:,"rain"] = rain
+        #df_bad_rows.loc[:,"snow"] = snow
         data_combined = pd.concat([data,df_bad_rows],axis=0)
+        
     else:
         data_combined = data
     data_combined  = data_combined[data_combined['Location']!='indoor']      
@@ -78,7 +85,7 @@ def serve_layout():
     
 
 
-    print(data.shape)
+    #print(data.shape)
     data_combined = data_combined.dropna(subset=['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Forecast_Temp','Forecast_Humidity'])
 
     #pd.to_datetime(data["Date"].iloc[0],
@@ -87,11 +94,12 @@ def serve_layout():
                 format='mixed')
     #'%Y-%m-%d %H:%M:%S.%f'
     data_combined.index = data_combined['Date']
+
     #data = data.rename(columns={'Temperature':'Humidity', 'Humidity':'Temperature'})
 
     data_combined = data_combined.drop(data[data['Humidity'] >= 100].index)
     #data = data.drop(data[data['Humidity'] <= 75].index)
-    data_combined["Date"] = pd.to_datetime(data_combined["Date"], format = '%Y-%m-%d %H:%M')
+    data_combined.index = pd.to_datetime(data_combined.index, format = '%Y-%m-%d %H:%M')
     #data_combined["Date"] = data_combined["Date"].dt.strftime('%Y-%m-%d %H:%M')
     f = open("dates_to_exclude.txt","r")
     for x in f:
@@ -161,6 +169,10 @@ def serve_layout():
     data_combined['Forecast_Humidity'] = forecast_humidity
     data_combined['Forecast_Rain'] = forecast_rain
     data_combined['Forecast_Snow'] = forecast_snow
+    data_combined['Humidity'] = data_combined['Humidity'].astype(float)
+    data_combined['Temperature'] = data_combined['Temperature'].astype(float)
+    data_combined['Current_Temp'] = data_combined['Current_Temp'].astype(float)
+    data_combined['Current_Humidity'] = data_combined['Current_Humidity'].astype(float)
     #data_combined["Current_Rain"] = np.where(data_combined["Forecast_Rain"][0] != 0, 1, 0)
     #data_combined["Current_Snow"] = np.where(data_combined["Forecast_Snow"][0] != 0, 1, 0)
     data_combined.loc[:, 'Current_Rain'] = data_combined.Forecast_Rain.map(lambda x: x[0])
@@ -169,8 +181,7 @@ def serve_layout():
     data_combined.loc[:, 'Forecasted_Humidity_24Hours'] = data_combined.Forecast_Humidity.map(lambda x: x[time_period_prediction])
     data_combined.loc[:, 'Forecasted_Rain_24Hours'] = data_combined.Forecast_Rain.map(lambda x: x[time_period_prediction])
     data_combined.loc[:, 'Forecasted_Snow_24Hours'] = data_combined.Forecast_Snow.map(lambda x: x[time_period_prediction])
-    data_ML_factors = data_combined[['Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow']]
-    data_ML_Y = data_combined[['Humidity']]
+
     data_combined['Humidity'] = data_combined['Humidity'].apply(lambda x: round(x, 2))
     data_combined['Temperature'] = data_combined['Temperature'].apply(lambda x: round(x, 2))
     data_combined['Current_Temp'] = data_combined['Current_Temp'].apply(lambda x: round(x, 2))
@@ -181,9 +192,13 @@ def serve_layout():
     from sklearn.model_selection import train_test_split
     from sklearn import svm
     from sklearn.metrics import mean_absolute_error
+    df_for_accuracy = data_combined[data_combined.index >= '2024-03-18 10:35']
+    df_for_accuracy.index = pd.DatetimeIndex(df_for_accuracy.index).to_period("5min")
+    data_ML_factors = df_for_accuracy[['Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow']]
+    data_ML_Y = df_for_accuracy[['Humidity']]
     X = data_ML_factors.to_numpy()
     y = data_ML_Y.to_numpy()
-    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.2)
+    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1)
 
     reg = LinearRegression().fit(X_train,y_train)
     svc = svm.SVR(kernel='sigmoid').fit(X_train,y_train)
@@ -193,8 +208,68 @@ def serve_layout():
     y_test_formatted = [float(each_element) for each_element in y_test]
     reg_accuracy = mean_absolute_error(reg_val,y_test_formatted)
     svm_accuracy = mean_absolute_error(svc_val,y_test_formatted)
+    
+
+    
+
+    df_train = df_for_accuracy[:int(0.9*len(df_for_accuracy))]['Humidity']
+    df_test = df_for_accuracy[-int(0.1*len(df_for_accuracy)):]['Humidity']
+
+    # df_train_temp = df_for_accuracy[:int(0.9*len(df_for_accuracy))]['Temperature']
+    # df_test_temp = df_for_accuracy[-int(0.1*len(df_for_accuracy)):]['Temperature']
+
+    # from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+    # acf_original = plot_acf(df_train_temp)
+    # pacf_original = plot_pacf(df_train_temp)
+
+    # from statsmodels.tsa.stattools import adfuller
+    # adf_test = adfuller(df_train_temp)
+    # print(f'p-value: {adf_test[1]}')
+
+    # df_arima = df_train_temp.diff().dropna()
+    # df_arima.plot()
+    # acf_original = plot_acf(df_arima)
+    # pacf_original = plot_pacf(df_arima)
+    # adf_test = adfuller(df_arima)
+    # print(f'p-value: {adf_test[1]}')
+
+    
+    model_humid = ARIMA(df_train, order=(2,1,0))
+    model_fit_humid = model_humid.fit()
+    prediction_humid = model_fit_humid.forecast(steps=int(0.1*len(df_for_accuracy)))
+    ARIMA_accuracy = mean_absolute_error(prediction_humid,df_test)
+    
+
+    # import matplotlib.pyplot as plt
+    # residuals = model_fit_humid.resid[1:]
+    # fig, ax = plt.subplots(1,2)
+    # residuals.plot(title='Residuals', ax=ax[0])
+    # residuals.plot(title='Density', kind='kde', ax=ax[1])
+    # plt.show()
+    # acf_res = plot_acf(residuals)
+
+    # pacf_res = plot_pacf(residuals)
+
+    import pmdarima as pm
+    auto_arima = pm.auto_arima(df_train, stepwise=False, seasonal=False)
+    auto_arima
+
+    auto_arima.summary()
+
+    forecast_test_auto = auto_arima.predict(n_periods=len(df_test))
+
+    ARIMA_accuracy_auto = mean_absolute_error(forecast_test_auto,df_test)
+
+    model_var= VAR(endog = df_for_accuracy[:int(0.9*len(df_for_accuracy))][['Humidity','Temperature']])
+    model_fit_var = model_var.fit()
+
+    print(model_fit_var.summary())
+    prediction = model_fit_var.forecast(df_for_accuracy[-int(0.1*len(df_for_accuracy)):][['Humidity','Temperature']].values,steps=int(0.1*len(df_for_accuracy)))
+    var_accuracy = mean_absolute_error(prediction,df_for_accuracy[-int(0.1*len(df_for_accuracy)):][['Humidity','Temperature']])
     print("Linear Regression accuracy:",reg_accuracy)
     print("SVM accuracy:",svm_accuracy)
+    print("ARIMA accuracy:",ARIMA_accuracy)
+    print("VAR accuracy:",var_accuracy)
     print(str(reg.coef_))
 
     # plt.figure(figsize=(12,8))
@@ -295,25 +370,29 @@ def serve_layout():
     # plt.figure(figsize=(10,6))
     
     #ARIMA to getting forecasted temperature
-    from statsmodels.tsa.arima.model import ARIMA
+    
+
     plot_data.index
-    model_humid = ARIMA(plot_data['Humidity'], order=(1,0,0))
+    model_humid = ARIMA(df_for_accuracy['Humidity'], order=(2,1,0))
     model_fit_humid = model_humid.fit()
     prediction_humid = model_fit_humid.forecast(steps=50)
 
-    model_temp = ARIMA(plot_data['Temperature'], order=(1,0,0))
+
+    model_temp = ARIMA(df_for_accuracy['Temperature'], order=(2,1,0))
     model_fit_temp = model_temp.fit()
-    prediction_temp = model_fit_temp.forecast(steps=50)
+    prediction_temp = model_fit_temp.forecast(steps=288)
     complete_data.index = pd.DatetimeIndex(complete_data.index).to_period('min')
     print(complete_data.index[-1])
     label = complete_data.index[-1]+60
     label
+    prediction_24_hours = model_fit_humid.forecast(steps=288)
+    ARIMA_24hrs_pred = prediction_24_hours[len(prediction_24_hours)-2]
     #ARIMA 
 
     #Reg and SVC prediction:
     
    #prediction_temp.iloc[12],
-    data_factors = [[prediction_temp.iloc[12],float(plot_data['Forecast_Humidity'][-1][time_period_prediction]),plot_data['Forecast_Temp'][-1][time_period_prediction],plot_data['Forecast_Rain'][-1][time_period_prediction],plot_data['Forecast_Snow'][-1][time_period_prediction]]] 
+    data_factors = [[prediction_temp.iloc[-1],float(df_for_accuracy['Forecast_Humidity'][-1][time_period_prediction]),df_for_accuracy['Forecast_Temp'][-1][time_period_prediction],df_for_accuracy['Forecast_Rain'][-1][time_period_prediction],df_for_accuracy['Forecast_Snow'][-1][time_period_prediction]]] 
     data_ML_test = pd.DataFrame(data_factors)
     print("Prediction for time:",label)
     print("data",data_factors)
@@ -338,10 +417,12 @@ def serve_layout():
     except:
         stored_forecast = pd.DataFrame(columns=["Humidity","Temperature"],index = pd.date_range(str(label),periods=1,freq='5min'))
     stored_forecast.index.name = "Date"
-    df_originalData.index = pd.DatetimeIndex(df_originalData.index).to_period('min')
-    label = df_originalData.index[-1]+5
+    #df_originalData = df_originalData.to_timestamp(freq='5min')
+    #df_originalData.index = pd.to_datetime(df_originalData.index)
+    df_originalData.index = pd.DatetimeIndex(df_originalData.index).to_period('5min')
+    label = df_originalData.index[-1]+1
     idx = pd.date_range(str(label),periods=50,freq='5min')
-    df_forecast_arima = pd.concat([prediction_humid,prediction_temp],axis=1).set_index(idx)
+    df_forecast_arima = pd.concat([prediction_humid,prediction_temp[:50]],axis=1).set_index(idx)
     df_forecast_arima = df_forecast_arima.rename(columns={'predicted_mean':'Humidity','predicted_mean':'Temperature'})
     df_forecast_arima.index.name = "Date"
     stored_forecast.index = pd.to_datetime(stored_forecast.index)
@@ -354,16 +435,21 @@ def serve_layout():
     len_total = len(df_originalData) + len(df_forecast_arima)
     label = df_originalData.index[0]
     idx = pd.date_range(str(label),periods=len_total,freq='5min')
+
+
     df_withforecast_arima = pd.concat([df_originalData,df_forecast_arima],axis=0)
+
+    df_originalData.index = df_originalData.index.astype(str)
+    df_originalData.index = pd.to_datetime(df_originalData.index)
     df_withforecast_arima.index.name = "Date"
     df_withforecast_arima = df_withforecast_arima.reset_index(drop=False)
     df_withforecast_arima["Date"] = pd.to_datetime(df_withforecast_arima["Date"].astype(str),format="mixed")
     df_towrite_csv.columns = ["Forecasted_Humidity","Forecasted_Temperature"]
-    df_withforecast_arima = df_withforecast_arima.merge(df_towrite_csv,on="Date",how="left")
-    df_withforecast_arima["Forecasted_Humidity"] = df_withforecast_arima["Forecasted_Humidity"].fillna(0)
-    df_withforecast_arima["Forecasted_Temperature"] = df_withforecast_arima["Forecasted_Temperature"].fillna(0)
-    df_withforecast_arima_melt_humid = pd.melt(df_withforecast_arima,id_vars="Date",value_vars=["Date","Humidity","Forecasted_Humidity"])
-    df_withforecast_arima_melt_temp = pd.melt(df_withforecast_arima,id_vars="Date",value_vars=["Date","Temperature","Forecasted_Temperature"])
+    df_todisplay_arima = df_withforecast_arima.merge(df_towrite_csv,on="Date",how="left")
+    df_todisplay_arima["Forecasted_Humidity"] = df_todisplay_arima["Forecasted_Humidity"].fillna(0)
+    df_todisplay_arima["Forecasted_Temperature"] = df_todisplay_arima["Forecasted_Temperature"].fillna(0)
+    df_withforecast_arima_melt_humid = pd.melt(df_todisplay_arima.reset_index(drop=False),id_vars="Date",value_vars=["Date","Humidity","Forecasted_Humidity"])
+    df_withforecast_arima_melt_temp = pd.melt(df_todisplay_arima.reset_index(drop=False),id_vars="Date",value_vars=["Date","Temperature","Forecasted_Temperature"])
     #[df_withforecast_arima.columns[:]]
     # df_forecast_arima
     # df_withforecast_arima = pd.concat([df_originalData,df_forecast_arima],axis=0)
@@ -403,20 +489,22 @@ def serve_layout():
     ## Multivariate Model start##   
     train = df_multivariatedata[:int(0.8*(len(df_multivariatedata)))]
     valid = df_multivariatedata[int(0.8*(len(df_multivariatedata))):]
-
-    from statsmodels.tsa.vector_ar.var_model import VAR
+    
+    
     valid_len = len(valid)
     try:
         model= VAR(endog = train)
         model_fit = model.fit()
 
         model_fit.summary()
-        prediction = model_fit.forecast(valid.values[-valid_len:],steps=valid_len)
-
-        df_multivariatedata.index[-1]+5
+        prediction = model_fit.forecast(train.values,steps=valid_len)
+        #var_accuracy = mean_squared_error(valid,prediction)
+        #print("Accuracy of VAR:",str(var_accuracy))
+        #df_multivariatedata.index[-1]+5
 
         label = df_multivariatedata.index[-1]+5
         idx = pd.date_range(str(label),periods=valid_len,freq='5min')
+        
         df_forecast = pd.DataFrame(data=prediction,index=idx, columns=['Humidity','Temperature'])
 
         df_forecast.head(12)
@@ -425,13 +513,15 @@ def serve_layout():
         #valid = df_multivariatedata[int(0.8*(len(df_multivariatedata))):]
 
         #from statsmodels.tsa.vector_ar.var_model import VAR
+        #df_multivariatedata = df_for_accuracy[['Humidity','Temperature']]
         valid_len = len(valid)
-        model= VAR(endog = df_multivariatedata)
+        model= VAR(endog = df_for_accuracy[['Humidity','Temperature']])
         model_fit = model.fit()
 
         model_fit.summary()
-        prediction = model_fit.forecast(df_multivariatedata.values,steps=50)
-
+        prediction = model_fit.forecast(df_for_accuracy[['Humidity','Temperature']].values,steps=50)
+        VAR_24_hours_pred = model_fit.forecast(df_for_accuracy[['Humidity','Temperature']].values,steps=288)
+        VAR_24_hours_humidity = VAR_24_hours_pred[len(VAR_24_hours_pred)-2]
         label = df_multivariatedata.index[-1]+5
         idx = pd.date_range(str(label),periods=50,freq='5min')
         df_forecast = pd.DataFrame(data=prediction,index=idx, columns=['Humidity','Temperature'])
@@ -526,8 +616,19 @@ def serve_layout():
     fig5 = px.line(data_frame = complete_data[['Humidity','SMA_10_humidity','CMA_humidity','ewm_0.1_humidity']], title = "Humidity Trend Lines")
     fig6 = px.line(data_frame = complete_data[['Temperature','SMA_10_temp','CMA_temp','ewm_0.1_temp']], title = "Temperature Trend Lines")
     fig7 = px.line(df_withforecast_arima_melt_humid,x="Date",y="value",color="variable")
+    fig7.add_vline(
+    x=df_forecast.index[0],
+    line_dash="dot",
+    line_color = "green",
+    label=dict(text="Forecasted values"),
+    ),
     fig8 = px.line(df_withforecast_arima_melt_temp,x="Date",y="value",color="variable")
-
+    fig8.add_vline(
+    x=df_forecast.index[0],
+    line_dash="dot",
+    line_color = "green",
+    label=dict(text="Forecasted values"),
+    ),
     return html.Div([
     # dcc.Interval(
     #     id='interval-component',
@@ -538,6 +639,12 @@ def serve_layout():
     html.Meta(httpEquiv='refresh',content="300"),
     html.H3("Predicted Humidity for next 24 hours by Linear Regression:"+str(round(lin_reg_pred,2))),
     html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
+    html.H3("Predicted Humidity for next 24 hours by ARIMA:"+str(round(ARIMA_24hrs_pred,2))),
+    html.H3("Predicted Humidity for next 24 hours by VAR:"+str(round(VAR_24_hours_humidity[0],2))),
+    html.H3("Linear Regression accuracy:"+str(round(reg_accuracy,2))),
+    html.H3("SVM accuracy:"+str(round(svm_accuracy,2))),
+    html.H3("ARIMA accuracy:"+str(round(ARIMA_accuracy,2))),
+    html.H3("VAR accuracy:"+str(round(var_accuracy,2))),
     dash_table.DataTable(data=data_combined[['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow','Forecasted_Temp_24Hours','Forecasted_Humidity_24Hours','Forecasted_Rain_24Hours','Forecasted_Snow_24Hours']].sort_index(ascending=False).to_dict('records'),page_size=10),
     dcc.Graph(figure=fig3),
     dcc.Graph(figure=fig2),
