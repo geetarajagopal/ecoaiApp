@@ -387,9 +387,9 @@ def serve_layout():
     label = complete_data.index[-1]+60
     label
     prediction_24_hours = model_fit_humid.forecast(steps=288)
-    ARIMA_24hrs_pred = prediction_24_hours[len(prediction_24_hours)-2]
+    ARIMA_24hrs_pred = round(prediction_24_hours[len(prediction_24_hours)-2],2)
     prediction_autoARima_24_hours = auto_arima.predict(steps=288)
-    Auto_ARIMA_24hrs_Pred = prediction_autoARima_24_hours[len(prediction_autoARima_24_hours) - 2]
+    Auto_ARIMA_24hrs_Pred = round(prediction_autoARima_24_hours[len(prediction_autoARima_24_hours) - 2],2)
     #ARIMA 
 
     #Reg and SVC prediction:
@@ -400,9 +400,9 @@ def serve_layout():
     print("Prediction for time:",label)
     print("data",data_factors)
     print(reg.predict(np.array(data_factors))) # Linear Regression Prediction
-    lin_reg_pred = reg.predict(np.array(data_factors))[0][0]
+    lin_reg_pred = round(reg.predict(np.array(data_factors))[0][0],2)
     print(svc.predict(np.array(data_factors))) # SVM Prediction
-    svm_pred = svc.predict(np.array(data_factors))[0]
+    svm_pred = round(svc.predict(np.array(data_factors))[0],2)
 
     
     #ARIMA for timeseries:
@@ -647,7 +647,8 @@ def serve_layout():
     html.Meta(httpEquiv='refresh',content="300"),
     html.H3("Predicted Humidity for next 24 hours by different models:"),
     dash_table.DataTable(data=df_results_prediction.to_dict('records'),page_size=10),
-    html.H3("Mean Absolute Error for different models:"),
+    html.H3("Current and Forecasted Values:"),
+    #html.H3("Mean Absolute Error for different models:"),
     #dash_table.DataTable(data=df_results_mae.to_dict('records'),page_size=10),
     #html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
     #html.H3("Predicted Humidity for next 24 hours by ARIMA:"+str(round(ARIMA_24hrs_pred,2))),
