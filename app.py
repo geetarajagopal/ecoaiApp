@@ -198,10 +198,10 @@ def serve_layout():
     data_ML_Y = df_for_accuracy[['Humidity']]
     X = data_ML_factors.to_numpy()
     y = data_ML_Y.to_numpy()
-    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1)
+    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size = 0.1,shuffle=False)
 
     reg = LinearRegression().fit(X_train,y_train)
-    svc = svm.SVR(kernel='sigmoid').fit(X_train,y_train)
+    svc = svm.SVR(kernel='poly').fit(X_train,y_train)
     
     svc_val = svc.predict(np.array(X_test)).tolist()
     reg_val = [float(each_element) for each_element in reg.predict(np.array(X_test))]
@@ -215,29 +215,29 @@ def serve_layout():
     df_train = df_for_accuracy[:int(0.9*len(df_for_accuracy))]['Humidity']
     df_test = df_for_accuracy[-int(0.1*len(df_for_accuracy)):]['Humidity']
 
-    # df_train_temp = df_for_accuracy[:int(0.9*len(df_for_accuracy))]['Temperature']
-    # df_test_temp = df_for_accuracy[-int(0.1*len(df_for_accuracy)):]['Temperature']
+    df_train_temp = df_for_accuracy[:int(0.9*len(df_for_accuracy))]['Temperature']
+    df_test_temp = df_for_accuracy[-int(0.1*len(df_for_accuracy)):]['Temperature']
 
-    # from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-    # acf_original = plot_acf(df_train_temp)
-    # pacf_original = plot_pacf(df_train_temp)
+    from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+    acf_original = plot_acf(df_train)
+    pacf_original = plot_pacf(df_train)
 
-    # from statsmodels.tsa.stattools import adfuller
-    # adf_test = adfuller(df_train_temp)
-    # print(f'p-value: {adf_test[1]}')
+    from statsmodels.tsa.stattools import adfuller
+    adf_test = adfuller(df_train)
+    print(f'p-value: {adf_test[1]}')
 
-    # df_arima = df_train_temp.diff().dropna()
-    # df_arima.plot()
-    # acf_original = plot_acf(df_arima)
-    # pacf_original = plot_pacf(df_arima)
-    # adf_test = adfuller(df_arima)
-    # print(f'p-value: {adf_test[1]}')
+    df_arima = df_train.diff().dropna()
+    df_arima.plot()
+    acf_original = plot_acf(df_arima)
+    pacf_original = plot_pacf(df_arima)
+    adf_test = adfuller(df_arima)
+    print(f'p-value: {adf_test[1]}')
 
     
-    model_humid = ARIMA(df_train, order=(2,1,0))
+    model_humid = ARIMA(df_train, order=(2,1,0), freq='5min')
     model_fit_humid = model_humid.fit()
-    prediction_humid = model_fit_humid.forecast(steps=int(0.1*len(df_for_accuracy)))
-    ARIMA_accuracy = mean_absolute_error(prediction_humid,df_test)
+    prediction_humid = model_fit_humid.forecast(steps=int(len(df_test)))
+    ARIMA_accuracy = mean_absolute_error(prediction_humid.values,df_test.values)
     
 
     # import matplotlib.pyplot as plt
@@ -269,6 +269,7 @@ def serve_layout():
     print("Linear Regression accuracy:",reg_accuracy)
     print("SVM accuracy:",svm_accuracy)
     print("ARIMA accuracy:",ARIMA_accuracy)
+    print("Auto ARIMA accuracy",ARIMA_accuracy_auto)
     print("VAR accuracy:",var_accuracy)
     print(str(reg.coef_))
 
@@ -387,12 +388,14 @@ def serve_layout():
     label
     prediction_24_hours = model_fit_humid.forecast(steps=288)
     ARIMA_24hrs_pred = prediction_24_hours[len(prediction_24_hours)-2]
+    prediction_autoARima_24_hours = auto_arima.predict(steps=288)
+    Auto_ARIMA_24hrs_Pred = prediction_autoARima_24_hours[len(prediction_autoARima_24_hours) - 2]
     #ARIMA 
 
     #Reg and SVC prediction:
     
    #prediction_temp.iloc[12],
-    data_factors = [[prediction_temp.iloc[-1],float(df_for_accuracy['Forecast_Humidity'][-1][time_period_prediction]),df_for_accuracy['Forecast_Temp'][-1][time_period_prediction],df_for_accuracy['Forecast_Rain'][-1][time_period_prediction],df_for_accuracy['Forecast_Snow'][-1][time_period_prediction]]] 
+    data_factors = [[prediction_temp.iloc[-1],df_for_accuracy['Forecast_Temp'][-1][time_period_prediction],float(df_for_accuracy['Forecast_Humidity'][-1][time_period_prediction]),df_for_accuracy['Forecast_Rain'][-1][time_period_prediction],df_for_accuracy['Forecast_Snow'][-1][time_period_prediction]]] 
     data_ML_test = pd.DataFrame(data_factors)
     print("Prediction for time:",label)
     print("data",data_factors)
@@ -629,23 +632,32 @@ def serve_layout():
     line_color = "green",
     label=dict(text="Forecasted values"),
     ),
+    data_combined = data_combined.rename(columns={"Humidity":"Soil Moisture(%)","Temperature":"Temperature(degree C)","Current_Temp":"Current_Temp(degree C)","Current_Humidity":"Current_Humidity(%)","Current_Rain":"Current_Rain(mm/h)","Current_Snow":"Current_Snow(mm/h)","Forecasted_Temp_24Hours":"Forecasted_Temp_24Hours(degree C)","Forecasted_Humidity_24Hours":"Forecasted_Humidity_24Hours(%)","Forecasted_Rain_24Hours":"Forecasted_Rain_24Hours(mm/h)","Forecasted_Snow_24Hours":"Forecasted_Snow_24Hours(mm/h)"})  
+
+    df_results_mae = pd.DataFrame({"Arima MAE":[ARIMA_accuracy],"AutoArima MAE":[ARIMA_accuracy_auto],"VAR MAE":[var_accuracy],"Linear Regression MAE":[reg_accuracy],"SVM MAE":[svm_accuracy]})
+    df_results_prediction = pd.DataFrame({"Arima":[ARIMA_24hrs_pred],"AutoArima":[Auto_ARIMA_24hrs_Pred],"VAR":[VAR_24_hours_humidity[0]],"Linear Regression":[lin_reg_pred],"SVM":[svm_pred]}) 
     return html.Div([
     # dcc.Interval(
     #     id='interval-component',
     #     interval=300000,  # in milliseconds
     #     n_intervals=0
     # ),
+      
     html.H1(children='Eco-AI Data', style={'textAlign':'center'}),
     html.Meta(httpEquiv='refresh',content="300"),
-    html.H3("Predicted Humidity for next 24 hours by Linear Regression:"+str(round(lin_reg_pred,2))),
-    html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
-    html.H3("Predicted Humidity for next 24 hours by ARIMA:"+str(round(ARIMA_24hrs_pred,2))),
-    html.H3("Predicted Humidity for next 24 hours by VAR:"+str(round(VAR_24_hours_humidity[0],2))),
-    html.H3("Linear Regression accuracy:"+str(round(reg_accuracy,2))),
-    html.H3("SVM accuracy:"+str(round(svm_accuracy,2))),
-    html.H3("ARIMA accuracy:"+str(round(ARIMA_accuracy,2))),
-    html.H3("VAR accuracy:"+str(round(var_accuracy,2))),
-    dash_table.DataTable(data=data_combined[['Date','Humidity','Temperature','Current_Temp','Current_Humidity','Current_Rain','Current_Snow','Forecasted_Temp_24Hours','Forecasted_Humidity_24Hours','Forecasted_Rain_24Hours','Forecasted_Snow_24Hours']].sort_index(ascending=False).to_dict('records'),page_size=10),
+    html.H3("Predicted Humidity for next 24 hours by different models:"),
+    dash_table.DataTable(data=df_results_prediction.to_dict('records'),page_size=10),
+    html.H3("Mean Absolute Error for different models:"),
+    dash_table.DataTable(data=df_results_mae.to_dict('records'),page_size=10),
+    #html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
+    #html.H3("Predicted Humidity for next 24 hours by ARIMA:"+str(round(ARIMA_24hrs_pred,2))),
+    #html.H3("Predicted Humidity for next 24 hours by AUTO ARIMA:"+str(round(Auto_ARIMA_24hrs_Pred,2))),
+    #html.H3("Predicted Humidity for next 24 hours by VAR:"+str(round(VAR_24_hours_humidity[0],2))),
+    #html.H3("Linear Regression accuracy:"+str(round(reg_accuracy,2))),
+    #html.H3("SVM accuracy:"+str(round(svm_accuracy,2))),
+    #html.H3("ARIMA accuracy:"+str(round(ARIMA_accuracy,2))),
+    #html.H3("VAR accuracy:"+str(round(var_accuracy,2))),
+    dash_table.DataTable(data=data_combined[['Date','Soil Moisture(%)','Temperature(degree C)','Current_Temp(degree C)','Current_Humidity(%)','Current_Rain(mm/h)','Current_Snow(mm/h)','Forecasted_Temp_24Hours(degree C)','Forecasted_Humidity_24Hours(%)','Forecasted_Rain_24Hours(mm/h)','Forecasted_Snow_24Hours(mm/h)']].sort_index(ascending=False).to_dict('records'),page_size=10),
     dcc.Graph(figure=fig3),
     dcc.Graph(figure=fig2),
     dcc.Graph(figure=fig1),
