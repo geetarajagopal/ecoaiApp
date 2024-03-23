@@ -388,8 +388,8 @@ def serve_layout():
     label
     prediction_24_hours = model_fit_humid.forecast(steps=288)
     ARIMA_24hrs_pred = round(prediction_24_hours[len(prediction_24_hours)-2],2)
-    prediction_autoARima_24_hours = auto_arima.predict(steps=288)
-    Auto_ARIMA_24hrs_Pred = round(prediction_autoARima_24_hours[len(prediction_autoARima_24_hours) - 2],2)
+    #prediction_autoARima_24_hours = auto_arima.predict(steps=288)
+    #Auto_ARIMA_24hrs_Pred = round(prediction_autoARima_24_hours[len(prediction_autoARima_24_hours) - 2],2)
     #ARIMA 
 
     #Reg and SVC prediction:
@@ -635,7 +635,7 @@ def serve_layout():
     data_combined = data_combined.rename(columns={"Humidity":"Soil Moisture(%)","Temperature":"Temperature(degree C)","Current_Temp":"Current_Temp(degree C)","Current_Humidity":"Current_Humidity(%)","Current_Rain":"Current_Rain(mm/h)","Current_Snow":"Current_Snow(mm/h)","Forecasted_Temp_24Hours":"Forecasted_Temp_24Hours(degree C)","Forecasted_Humidity_24Hours":"Forecasted_Humidity_24Hours(%)","Forecasted_Rain_24Hours":"Forecasted_Rain_24Hours(mm/h)","Forecasted_Snow_24Hours":"Forecasted_Snow_24Hours(mm/h)"})  
 
     df_results_mae = pd.DataFrame({"Arima MAE":[ARIMA_accuracy],"VAR MAE":[var_accuracy],"Linear Regression MAE":[reg_accuracy],"SVM MAE":[svm_accuracy]})
-    df_results_prediction = pd.DataFrame({"Arima":[ARIMA_24hrs_pred],"AutoArima":[Auto_ARIMA_24hrs_Pred],"VAR":[VAR_24_hours_humidity[0]],"Linear Regression":[lin_reg_pred],"SVM":[svm_pred]}) 
+    df_results_prediction = pd.DataFrame({"Arima":[ARIMA_24hrs_pred],"VAR":[VAR_24_hours_humidity[0]],"Linear Regression":[lin_reg_pred],"SVM":[svm_pred]}) 
     return html.Div([
     # dcc.Interval(
     #     id='interval-component',
@@ -669,7 +669,7 @@ def serve_layout():
     dcc.Graph(figure=fig8),
     dcc.Interval(
             id='interval-component',
-            interval=5*1000, # in milliseconds
+            interval=500*1000, # in milliseconds
             n_intervals=0
         )
     #dcc.Dropdown(df_withforecast.columns, 'Humidity', id='dropdown-selection'),
