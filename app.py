@@ -251,14 +251,14 @@ def serve_layout():
     # pacf_res = plot_pacf(residuals)
 
     import pmdarima as pm
-    auto_arima = pm.auto_arima(df_train, stepwise=False, seasonal=False)
-    auto_arima
+    #auto_arima = pm.auto_arima(df_train, stepwise=False, seasonal=False)
+    #auto_arima
 
-    auto_arima.summary()
+    #auto_arima.summary()
 
-    forecast_test_auto = auto_arima.predict(n_periods=len(df_test))
+    #forecast_test_auto = auto_arima.predict(n_periods=len(df_test))
 
-    ARIMA_accuracy_auto = mean_absolute_error(forecast_test_auto,df_test)
+    #ARIMA_accuracy_auto = mean_absolute_error(forecast_test_auto,df_test)
 
     model_var= VAR(endog = df_for_accuracy[:int(0.9*len(df_for_accuracy))][['Humidity','Temperature']])
     model_fit_var = model_var.fit()
@@ -269,7 +269,7 @@ def serve_layout():
     print("Linear Regression accuracy:",reg_accuracy)
     print("SVM accuracy:",svm_accuracy)
     print("ARIMA accuracy:",ARIMA_accuracy)
-    print("Auto ARIMA accuracy",ARIMA_accuracy_auto)
+    #print("Auto ARIMA accuracy",ARIMA_accuracy_auto)
     print("VAR accuracy:",var_accuracy)
     print(str(reg.coef_))
 
@@ -634,7 +634,7 @@ def serve_layout():
     ),
     data_combined = data_combined.rename(columns={"Humidity":"Soil Moisture(%)","Temperature":"Temperature(degree C)","Current_Temp":"Current_Temp(degree C)","Current_Humidity":"Current_Humidity(%)","Current_Rain":"Current_Rain(mm/h)","Current_Snow":"Current_Snow(mm/h)","Forecasted_Temp_24Hours":"Forecasted_Temp_24Hours(degree C)","Forecasted_Humidity_24Hours":"Forecasted_Humidity_24Hours(%)","Forecasted_Rain_24Hours":"Forecasted_Rain_24Hours(mm/h)","Forecasted_Snow_24Hours":"Forecasted_Snow_24Hours(mm/h)"})  
 
-    df_results_mae = pd.DataFrame({"Arima MAE":[ARIMA_accuracy],"AutoArima MAE":[ARIMA_accuracy_auto],"VAR MAE":[var_accuracy],"Linear Regression MAE":[reg_accuracy],"SVM MAE":[svm_accuracy]})
+    df_results_mae = pd.DataFrame({"Arima MAE":[ARIMA_accuracy],"VAR MAE":[var_accuracy],"Linear Regression MAE":[reg_accuracy],"SVM MAE":[svm_accuracy]})
     df_results_prediction = pd.DataFrame({"Arima":[ARIMA_24hrs_pred],"AutoArima":[Auto_ARIMA_24hrs_Pred],"VAR":[VAR_24_hours_humidity[0]],"Linear Regression":[lin_reg_pred],"SVM":[svm_pred]}) 
     return html.Div([
     # dcc.Interval(
