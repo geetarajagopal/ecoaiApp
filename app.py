@@ -648,7 +648,7 @@ def serve_layout():
     html.H3("Predicted Humidity for next 24 hours by different models:"),
     dash_table.DataTable(data=df_results_prediction.to_dict('records'),page_size=10),
     html.H3("Mean Absolute Error for different models:"),
-    dash_table.DataTable(data=df_results_mae.to_dict('records'),page_size=10),
+    #dash_table.DataTable(data=df_results_mae.to_dict('records'),page_size=10),
     #html.H3("Predicted Humidity for next 24 hours by SVM:"+str(round(svm_pred,2))),
     #html.H3("Predicted Humidity for next 24 hours by ARIMA:"+str(round(ARIMA_24hrs_pred,2))),
     #html.H3("Predicted Humidity for next 24 hours by AUTO ARIMA:"+str(round(Auto_ARIMA_24hrs_Pred,2))),
