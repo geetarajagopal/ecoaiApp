@@ -569,7 +569,10 @@ def serve_layout():
     df_withforecast["Date"] = pd.to_datetime(df_withforecast["Date"].astype(str),format="mixed")
     df_withforecast.head(5)
     df_withforecast.columns
-
+    if ARIMA_24hrs_pred >= 0.7:
+        msg_to_display = "You do not need to water in next 24 hours"
+    else:
+        msg_to_display = "You will need to water in next 24 hours"
         #df_withforecast.index = pd.to_datetime(df_withforecast.index )
     df_withforecast['Humidity'] = df_withforecast['Humidity'].astype(float)
     df_withforecast['Temperature'] = df_withforecast['Temperature'].astype(float)    
@@ -645,6 +648,7 @@ def serve_layout():
       
     html.H1(children='Eco-AI Data', style={'textAlign':'center'}),
     html.Meta(httpEquiv='refresh',content="300"),
+    html.H3(msg_to_display),
     html.H3("Predicted Humidity for next 24 hours by different models:"),
     dash_table.DataTable(data=df_results_prediction.to_dict('records'),page_size=10),
     html.H3("Current and Forecasted Values:"),
@@ -669,7 +673,7 @@ def serve_layout():
     dcc.Graph(figure=fig8),
     dcc.Interval(
             id='interval-component',
-            interval=500*1000, # in milliseconds
+            interval=50000*1000, # in milliseconds
             n_intervals=0
         )
     #dcc.Dropdown(df_withforecast.columns, 'Humidity', id='dropdown-selection'),
